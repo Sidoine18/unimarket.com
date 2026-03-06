@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniMarket | La Place de Marché Étudiante n°1</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+    (function() {
+        const session = JSON.parse(localStorage.getItem('unimarket_session'));
+        const tempUser = localStorage.getItem('unimarket_temp_user');
+
+        // Si l'utilisateur a un compte temporaire mais n'a pas fini la vérification
+        if (tempUser && !session) {
+            window.location.href = 'verify.html';
+            return;
+        }
+
+        // Si aucune session et pas de compte temporaire, on le laisse naviguer en invité
+        // Mais s'il essaie d'aller sur le dashboard, il sera bloqué par la logique déjà en place.
+    })();
+</script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --bg-light: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --white: #ffffff;
+            --radius: 16px;
+            --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-main); line-height: 1.5; padding-bottom: 80px; }
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+        /* --- HEADER & LOGO --- */
+        header { background: var(--white); padding: 18px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 0 rgba(0,0,0,0.05); }
+        .nav-flex { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+        .logo span { color: var(--text-main); }
+        .auth-btns { display: flex; gap: 12px; }
+        .btn-lite { font-weight: 700; color: var(--text-muted); font-size: 0.9rem; }
+        .btn-fill { background: var(--primary); color: white; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; }
+
+        /* --- HERO & RECHERCHE --- */
+        .hero { background: var(--primary); padding: 50px 0; border-radius: 0 0 35px 35px; color: white; }
+        .hero h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 25px; text-align: center; }
+        .search-container { position: relative; max-width: 550px; margin: 0 auto; }
+        .search-container input { width: 100%; padding: 18px 25px 18px 55px; border-radius: 20px; border: none; font-size: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); font-weight: 600; outline: none; }
+        .search-container i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem; }
+
+        /* --- CATÉGORIES --- */
+        .cat-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 30px 0; scrollbar-width: none; }
+        .cat-scroll::-webkit-scrollbar { display: none; }
+        .cat-item { background: var(--white); padding: 12px 20px; border-radius: 50px; white-space: nowrap; font-weight: 700; font-size: 0.85rem; box-shadow: var(--shadow); border: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; }
+        .cat-item i { color: var(--primary); }
+
+        /* --- GRILLE D'ANNONCES --- */
+        .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-title h2 { font-size: 1.3rem; font-weight: 800; }
+        .section-title a { color: var(--primary); font-size: 0.85rem; font-weight: 700; }
+
+        .ads-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; } /* Mobile: 2 par ligne */
+        @media (min-width: 768px) { .ads-grid { grid-template-columns: repeat(4, 1fr); } } /* PC: 4 par ligne */
+
+        .ad-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); position: relative; }
+        .ad-img { width: 100%; height: 160px; background: #e2e8f0; position: relative; }
+        .ad-img img { width: 100%; height: 100%; object-fit: cover; }
+        .badge-premium { position: absolute; top: 10px; left: 10px; background: var(--accent); color: white; font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; }
+        .ad-info { padding: 12px; }
+        .ad-price { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .ad-title { font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .ad-user { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+        /* --- NAVIGATION MOBILE FIXE --- */
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #f1f5f9; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.03); }
+        .tab-item { text-align: center; color: var(--text-muted); font-size: 0.7rem; font-weight: 600; }
+        .tab-item i { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .tab-item.active { color: var(--primary); }
+        .tab-plus { background: var(--primary); color: white !important; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -35px; box-shadow: 0 8px 15px rgba(37, 99, 235, 0.4); border: 4px solid var(--bg-light); }
+        .tab-plus i { margin: 0; font-size: 1.2rem; }
+    </style>
+</head>
+
+<script>
+/**
+ * UNIMARKET LOGIC ENGINE (Version Expert)
+ * Gère la persistance de session et l'état de l'interface
+ */
+
+const UniMarketEngine = {
+    // 1. Initialisation : Vérifie si quelqu'un est déjà connecté au chargement
+    init() {
+        this.checkSession();
+        this.renderUserInterface();
+    },
+
+    // 2. Vérification de la session via localStorage
+    getSession() {
+        const user = localStorage.getItem('unimarket_session');
+        return user ? JSON.parse(user) : null;
+    },
+
+    // 3. Mise à jour de l'interface selon l'état de connexion
+    renderUserInterface() {
+        const user = this.getSession();
+        const authSection = document.querySelector('.auth-btns'); // Ta zone de boutons
+        const welcomeTitle = document.querySelector('.hero h1');
+
+        if (user && user.isLoggedIn) {
+            // L'utilisateur est connecté : On change les boutons Inscription/Connexion
+            authSection.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">
+                        <i class="fa-solid fa-circle-user"></i> ${user.fullname}
+                    </span>
+                    <a href="#" onclick="UniMarketEngine.logout()" class="btn-lite" style="color: #ff4d4d; font-size: 1.2rem;">
+                        <i class="fa-solid fa-power-off"></i>
+                    </a>
+                </div>
+            `;
+            
+            // Personnalisation du message de bienvenue
+            if(welcomeTitle) {
+                welcomeTitle.innerHTML = `Ravi de vous revoir, <span style="color: #fbbf24;">${user.fullname.split(' ')[0]}</span> !`;
+            }
+        }
+    },
+
+    // 4. Fonction de déconnexion
+    logout() {
+        if(confirm("Voulez-vous vraiment vous déconnecter ?")) {
+            localStorage.removeItem('unimarket_session');
+            window.location.reload(); // Rafraîchit pour réinitialiser l'interface
+        }
+    },
+
+    // 5. Utilitaire pour vérifier la connexion avant une action (ex: publier)
+    requireAuth(callback) {
+        if (this.getSession()) {
+            callback();
+        } else {
+            alert("Oups ! Vous devez être connecté pour faire cela.");
+            window.location.href = 'login.html';
+        }
+    }
+};
+
+// Lancement automatique au chargement de la page
+document.addEventListener('DOMContentLoaded', () => UniMarketEngine.init());
+</script>
+
+
+<body>
+
+    <header>
+        <div class="container nav-flex">
+            <a href="index.html" class="logo">Uni<span>Market</span></a>
+            <div id="auth-zone" class="auth-btns">
+    <a href="login.html" id="btn-login" class="btn-lite">Connexion</a>
+    <a href="register.html" id="btn-register" class="btn-main">S'inscrire</a>
+</div>
+
+<script>
+    function checkAuthStatus() {
+        const session = JSON.parse(localStorage.getItem('unimarket_session'));
+        const authZone = document.getElementById('auth-zone');
+
+        if (session && session.isLoggedIn) {
+            // 1. L'utilisateur est connecté : On efface les boutons et on met son profil
+            authZone.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="dashboard.html" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 35px; height: 35px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">
+                            ${session.fullname.charAt(0).toUpperCase()}
+                        </div>
+                        <span style="font-weight: 700; font-size: 0.9rem; color: #0f172a;">Mon Espace</span>
+                    </a>
+                    <button onclick="logout()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem;">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </div>
+            `;
+
+            // 2. Personnalisation du message de bienvenue (si tu as un titre H1 sur l'accueil)
+            const welcomeMsg = document.querySelector('.hero h1');
+            if(welcomeMsg) {
+                welcomeMsg.innerHTML = `Ravi de vous revoir, <span style="color: #2563eb;">${session.fullname.split(' ')[0]}</span> !`;
+            }
+        }
+    }
+
+    function logout() {
+        if(confirm("Voulez-vous vous déconnecter ?")) {
+            localStorage.removeItem('unimarket_session');
+            window.location.reload(); // Rafraîchit la page pour réafficher Inscription/Connexion
+        }
+    }
+
+    // Exécuter la vérification au chargement de la page
+    document.addEventListener('DOMContentLoaded', checkAuthStatus);
+</script>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Trouvez tout ce qu'il vous faut sur votre campus.</h1>
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="iPhone, livre, vêtement, nourriture...">
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="cat-scroll">
+            <a href="#" class="cat-item"><i class="fa-solid fa-hamburger"></i> Restauration</a>
+            <a href="#" class="cat-item"><i class="fa-solid fa-shirt"></i> Mode</a>
+            <a href="#" class="cat-item"><i class="fa-solid fa-laptop"></i> High-Tech</a>
+            <a href="#" class="cat-item"><i class="fa-solid fa-book"></i> Scolaire</a>
+            <a href="#" class="cat-item"><i class="fa-solid fa-bed"></i> Logement</a>
+        </div>
+
+        <div class="section-title">
+            <h2>Dernières offres</h2>
+            <a href="annonces.html">Tout voir <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+        <div class="ads-grid">
+            <article class="ad-card">
+                <div class="badge-premium"><i class="fa-solid fa-bolt"></i> BOOSTÉ</div>
+                <div class="ad-img">
+                    <img src="https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=300" alt="Produit">
+                </div>
+                <div class="ad-info">
+                    <p class="ad-price">45 000 F</p>
+                    <h3 class="ad-title">Samsung Galaxy A12 - État neuf</h3>
+                    <p class="ad-user"><i class="fa-solid fa-circle-user"></i> Sidoine B.</p>
+                </div>
+            </article>
+
+            <article class="ad-card">
+                <div class="ad-img">
+                    <img src="https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=300" alt="Plat">
+                </div>
+                <div class="ad-info">
+                    <p class="ad-price">800 F</p>
+                    <h3 class="ad-title">Atassi Complet + Œuf</h3>
+                    <p class="ad-user"><i class="fa-solid fa-circle-user"></i> Resto UAC</p>
+                </div>
+            </article>
+
+            <article class="ad-card">
+                <div class="ad-img">
+                    <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=300" alt="Vêtement">
+                </div>
+                <div class="ad-info">
+                    <p class="ad-price">4 500 F</p>
+                    <h3 class="ad-title">T-Shirt Vintage - Taille L</h3>
+                    <p class="ad-user"><i class="fa-solid fa-circle-user"></i> Marc O.</p>
+                </div>
+            </article>
+
+            <article class="ad-card">
+                <div class="ad-img">
+                    <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=300" alt="Livre">
+                </div>
+                <div class="ad-info">
+                    <p class="ad-price">2 000 F</p>
+                    <h3 class="ad-title">Livre de Microéconomie</h3>
+                    <p class="ad-user"><i class="fa-solid fa-circle-user"></i> Sarah L.</p>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <nav class="tab-bar">
+        <a href="index.html" class="tab-item active">
+            <i class="fa-solid fa-house"></i>
+            Accueil
+        </a>
+        <a href="annonces.html" class="tab-item">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Explorer
+        </a>
+        <a href="publier.html" class="tab-item tab-plus">
+            <i class="fa-solid fa-plus"></i>
+        </a>
+        <a href="favoris.html" class="tab-item">
+            <i class="fa-solid fa-heart"></i>
+            Favoris
+        </a>
+        <a href="dashboard.html" class="tab-item">
+            <i class="fa-solid fa-circle-user"></i>
+            Compte
+        </a>
+    </nav>
+
+</body>
+</html>

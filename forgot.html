@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Récupération | UniMarket</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 400px; width: 90%; }
+        input { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; outline: none; font-size: 1rem; }
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Récupération</h2>
+        <p style="color: #64748b; margin-bottom: 20px;">Saisissez votre email pour recevoir un code de réinitialisation.</p>
+        
+        <input type="email" id="forgotEmail" placeholder="votre@email.com">
+        <button class="btn" id="sendBtn" onclick="handleForgot()">Envoyer le code</button>
+        <a href="login.html" style="display:block; margin-top:15px; color:var(--primary); text-decoration:none; font-size:0.9rem;">Retour à la connexion</a>
+    </div>
+
+    <script>
+        emailjs.init("v0zJTBHfTAyzyH6RH");
+
+        function handleForgot() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            const users = JSON.parse(localStorage.getItem('unimarket_users')) || [];
+            const user = users.find(u => u.email === email);
+
+            if (!user) {
+                alert("Cet email n'existe pas sur UniMarket !");
+                return;
+            }
+
+            const recoveryCode = Math.floor(1000 + Math.random() * 9000);
+            
+            // On stocke l'email et le code temporairement pour la page suivante
+            localStorage.setItem('unimarket_recovery', JSON.stringify({ email: email, code: recoveryCode }));
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.innerText = "Envoi...";
+
+            const templateParams = {
+                to_name: user.fullname,
+                to_email: email,
+                code: recoveryCode,
+                from_name: "UniMarket Sécurité"
+            };
+
+            emailjs.send('service_unimarket', 'template_0tx9149', templateParams)
+                .then(() => {
+                    alert("Code de récupération envoyé !");
+                    window.location.href = 'reset-password.html';
+                });
+        }
+    </script>
+</body>
+</html>

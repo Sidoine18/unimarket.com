@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorer les offres | UniMarket</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --heart: #ef4444;
+            --whatsapp: #25D366;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        h1 { font-size: 1.5rem; font-weight: 800; }
+
+        /* Grille d'annonces */
+        .ads-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        @media (min-width: 768px) { .ads-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .ad-card { background: var(--white); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); position: relative; transition: 0.3s; }
+        .ad-card:hover { transform: translateY(-5px); }
+
+        /* Image et Favoris */
+        .ad-img-container { width: 100%; height: 170px; background: #e2e8f0; position: relative; }
+        .ad-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .btn-fav { 
+            position: absolute; top: 12px; right: 12px; 
+            background: rgba(255,255,255,0.9); border: none; 
+            width: 35px; height: 35px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--muted); transition: 0.3s;
+        }
+        .btn-fav.active { color: var(--heart); }
+
+        /* Infos */
+        .ad-info { padding: 15px; }
+        .ad-price { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .ad-title { font-size: 0.9rem; font-weight: 600; margin: 5px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .ad-seller { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; }
+
+        /* Bouton WhatsApp */
+        .btn-wa { 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: var(--whatsapp); color: white; text-decoration: none;
+            padding: 10px; border-radius: 12px; font-weight: 700; font-size: 0.85rem;
+            transition: 0.3s;
+        }
+        .btn-wa:hover { filter: brightness(1.1); }
+
+        /* Message vide */
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); grid-column: 1 / -1; }
+
+        /* Nav Tab */
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #eee; z-index: 100; }
+        .tab-item { color: var(--muted); font-size: 1.3rem; }
+        .tab-item.active { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Explorer</h1>
+            <div id="user-display" style="font-size: 0.8rem; font-weight: 700; color: var(--primary);"></div>
+        </header>
+
+        <div class="ads-grid" id="adsContainer">
+            </div>
+    </div>
+
+    <nav class="tab-bar">
+        <a href="index.html" class="tab-item"><i class="fa-solid fa-house"></i></a>
+        <a href="annonces.html" class="tab-item active"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="publier.html" class="tab-item"><i class="fa-solid fa-plus-circle" style="color:var(--primary); font-size: 2.2rem; margin-top: -20px;"></i></a>
+        <a href="favoris.html" class="tab-item"><i class="fa-solid fa-heart"></i></a>
+        <a href="login.html" class="tab-item"><i class="fa-solid fa-user"></i></a>
+    </nav>
+
+    <script>
+        /**
+         * LOGIQUE EXPERT : AFFICHAGE & WHATSAPP
+         */
+
+        const adsContainer = document.getElementById('adsContainer');
+        const session = JSON.parse(localStorage.getItem('unimarket_session'));
+        
+        // Afficher le nom de l'utilisateur dans le header si connecté
+        if(session) {
+            document.getElementById('user-display').innerText = "Salut, " + session.fullname.split(' ')[0];
+        }
+
+        function loadAds() {
+            const annonces = JSON.parse(localStorage.getItem('unimarket_ads')) || [];
+            const favoris = JSON.parse(localStorage.getItem('unimarket_favs')) || [];
+
+            if (annonces.length === 0) {
+                adsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.2;"></i>
+                        <p>Aucune annonce pour le moment.<br>Soyez le premier à publier !</p>
+                    </div>`;
+                return;
+            }
+
+            adsContainer.innerHTML = ''; // On vide le container
+
+            annonces.forEach(ad => {
+                const isFav = favoris.some(f => f.id === ad.id);
+                const favClass = isFav ? 'active' : '';
+                
+                // Préparation du lien WhatsApp Expert
+                const text = encodeURIComponent(`Bonjour ${ad.vendeur}, je suis intéressé par votre annonce "${ad.titre}" sur UniMarket. Est-elle toujours disponible ?`);
+                const waLink = `https://wa.me/${ad.whatsapp}?text=${text}`;
+
+                const card = `
+                    <article class="ad-card">
+                        <div class="ad-img-container">
+                            <button class="btn-fav ${favClass}" onclick="toggleFav(${ad.id})">
+                                <i class="fa-solid fa-heart"></i>
+                            </button>
+                            <img src="${ad.image || 'https://via.placeholder.com/300'}" alt="Produit">
+                        </div>
+                        <div class="ad-info">
+                            <p class="ad-price">${Number(ad.prix).toLocaleString()} FCFA</p>
+                            <h3 class="ad-title">${ad.titre}</h3>
+                            <p class="ad-seller"><i class="fa-solid fa-user-circle"></i> ${ad.vendeur}</p>
+                            <a href="${waLink}" target="_blank" class="btn-wa">
+                                <i class="fa-brands fa-whatsapp"></i> Commander
+                            </a>
+                        </div>
+                    </article>
+                `;
+                adsContainer.innerHTML += card;
+            });
+        }
+
+        /**
+         * LOGIQUE DES FAVORIS
+         */
+        function toggleFav(id) {
+            let annonces = JSON.parse(localStorage.getItem('unimarket_ads')) || [];
+            let favoris = JSON.parse(localStorage.getItem('unimarket_favs')) || [];
+            
+            const adIndex = favoris.findIndex(f => f.id === id);
+            
+            if (adIndex > -1) {
+                // Si déjà en favoris, on retire
+                favoris.splice(adIndex, 1);
+            } else {
+                // Sinon on cherche l'annonce et on l'ajoute
+                const adToAdd = annonces.find(a => a.id === id);
+                if (adToAdd) favoris.push(adToAdd);
+            }
+            
+            localStorage.setItem('unimarket_favs', JSON.stringify(favoris));
+            loadAds(); // Rafraîchir l'affichage
+        }
+
+        // Initialisation
+        window.onload = loadAds;
+    </script>
+</body>
+</html>
